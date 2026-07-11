@@ -2,8 +2,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const $ = (s, all = false) => all ? document.querySelectorAll(s) : document.querySelector(s);
   const getV = (el, def) => el && el.value !== '' ? parseFloat(el.value) : def;
 
-  const loadFiles = async () => { refreshPalette(); loadProject(); };
-
   const run = $('#run-btn'), pause = $('#pause-btn'), stop = $('#stop-btn'), debug = $('#debug-btn');
   const save = $('#site-save-action'), addBtn = '#add-sprite-btn', list = $('#sprites-list-container'), canvas = $('#canvas-mock');
   const iName = $('#sprite-name-input'), iX = $('#sprite-x-input'), iY = $('#sprite-y-input'), iSize = $('#sprite-size-input'), iDir = $('#sprite-dir-input');
@@ -12,7 +10,6 @@ window.addEventListener('DOMContentLoaded', () => {
   let isPaused = false, activeBlk = null, tx = 0, ty = 0;
   $('.asset-info-bar .info-input', true).forEach(i => { i.removeAttribute('readonly'); i.style.pointerEvents = 'auto'; });
 
-  // 🛠️ 【バグ完全修正】クラッシュの原因だったエラーの行を綺麗に直し、方眼紙が出るようにしました
   $('.menu-item', true).forEach(m => {
     if (m.textContent === '編集') m.addEventListener('click', () => $('#streech-workspace').classList.toggle('grid-mode'));
   });
@@ -132,5 +129,5 @@ window.addEventListener('DOMContentLoaded', () => {
     list.appendChild(c); bindCard(c); c.click();
   });
 
-  $('.asset-card', true).forEach(c => bindCard(c)); loadFiles();
+  $('.asset-card', true).forEach(c => bindCard(c)); refreshPalette(); loadProject();
 });
