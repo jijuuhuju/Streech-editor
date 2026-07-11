@@ -16,23 +16,21 @@ window.addEventListener('DOMContentLoaded', () => {
   if (run) run.addEventListener('click', () => { if (isPaused) togglePause(); resetBtn(); run.classList.add('active'); if (stop) { stop.style.opacity = "1"; stop.style.pointerEvents = "auto"; } updateStyle(); }); if (pause) pause.addEventListener('click', togglePause);
   if (stop) { stop.addEventListener('click', () => { if (isPaused) togglePause(); resetBtn(); [iX, iY].forEach(i => i.value = 0); iSize.value = 100; iDir.value = 90; updateStyle(); stop.style.opacity = "0.4"; stop.style.pointerEvents = "none"; }); stop.style.opacity = "0.4"; stop.style.pointerEvents = "none"; }
 
+  // 🛠️ 【タップ＆整列＆削除システム】ドラッグ用の古いプログラムを1文字残さず全消去し、完全にタップ操作だけに統一しました！
   const setupPaletteBlock = (b) => {
     b.addEventListener('click', (e) => {
       if (e.target.classList.contains('block-input') || isPaused) return; e.stopPropagation();
       const ws = $('#streech-workspace'); if (!ws) return;
-      
       const clone = b.cloneNode(true);
       clone.style.cssText = `position: relative; left: 0px; top: 0px; opacity: 1; z-index: 5; margin-top: 4px; display: flex; flex-direction: column;`;
       
-      // 「ずっと（C型）」があれば中へ、ハットや通常のブロックなら下（末尾）へ自動で綺麗に配置
       const wrapSlot = ws.querySelector('.wrap-slot');
       if (wrapSlot) { wrapSlot.appendChild(clone); } else { ws.appendChild(clone); }
       
-      // 🛠️ 【確認画面つき削除システム】配置されたブロックをタップした時、安心の「確認画面」を出してからその場でパッと消去します！
       clone.addEventListener('click', (ev) => {
         if (!ev.target.classList.contains('block-input') && !isPaused) {
           ev.stopPropagation();
-          if (confirm("このブロックを削除しますか？")) { clone.remove(); }
+          if (confirm("このブロックを削除しますか？")) { clone.remove(); } [e.g. 5]
         }
       });
     });
@@ -51,7 +49,7 @@ window.addEventListener('DOMContentLoaded', () => {
       JSON.parse(sB).forEach(d => {
         const div = document.createElement('div'); div.innerHTML = d.html; const rb = div.firstChild;
         rb.style.cssText = `position: relative; left: 0px; top: 0px; opacity: 1; z-index: 5; margin-top: 4px; display: flex; flex-direction: column;`;
-        ws.appendChild(rb); rb.addEventListener('click', (ev) => { if (!ev.target.classList.contains('block-input') && !isPaused) { ev.stopPropagation(); if (confirm("このブロックを削除しますか？")) { rb.remove(); } } });
+        ws.appendChild(rb); rb.addEventListener('click', (ev) => { if (!ev.target.classList.contains('block-input') && !isPaused) { ev.stopPropagation(); if (confirm("このブロックを削除しますか？")) { rb.remove(); } } }); [e.g. 5]
       });
     } else {
       const hat = document.createElement('div'); hat.className = 'streech-block block-events hat-block';
