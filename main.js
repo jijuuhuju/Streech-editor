@@ -4,8 +4,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const loadFiles = async () => {
     for (const c of ['motion', 'looks', 'sound', 'events', 'control']) {
-      const res = await fetch(`./${c}.html`);
-      if (res.ok) $(`#group-${c}`).innerHTML = await res.text();
+      const res = await fetch(`./${c}.html`); if (res.ok) $(`#group-${c}`).innerHTML = await res.text();
     }
     const oRes = await fetch('./other_blocks.html');
     if (oRes.ok) {
@@ -23,6 +22,12 @@ window.addEventListener('DOMContentLoaded', () => {
   let isPaused = false, activeBlk = null, tx = 0, ty = 0;
   $('.asset-info-bar .info-input', true).forEach(i => { i.removeAttribute('readonly'); i.style.pointerEvents = 'auto'; });
 
+  const menuItems = $('.menu-item', true);
+  if (menuItems && menuItems) {
+    menuItems.addEventListener('click', () => $('#streech-workspace').classList.toggle('grid-mode'));
+  }
+  if (debug) debug.addEventListener('click', () => { debug.classList.toggle('active'); $('#streech-workspace').classList.toggle('debug-mode'); });
+
   if (iName) iName.addEventListener('input', (e) => {
     if (isPaused) return; const n = e.target.value;
     if (badge) badge.textContent = n; const c = $('.asset-card.active span'); if (c) c.textContent = n;
@@ -34,7 +39,7 @@ window.addEventListener('DOMContentLoaded', () => {
   };
   [iX, iY, iSize, iDir].forEach(i => i && i.addEventListener('input', updateStyle));
 
-  const resetBtn = () => [run, pause, debug].forEach(b => b && b.classList.remove('active'));
+  const resetBtn = () => [run, pause].forEach(b => b && b.classList.remove('active'));
   const triggerRun = () => { if (isPaused) togglePause(); resetBtn(); if (run) run.classList.add('active'); updateStyle(); };
 
   function togglePause() {
@@ -53,7 +58,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   if (save) save.addEventListener('click', () => {
     const ws = $('#streech-workspace'); if (!ws) return;
-    const data = Array.from(ws.querySelectorAll('.streech-block')).map(b => ({ html: b.outerHTML, left: b.style.left, top: b.style.top, val: b.querySelector('.block-input')?.value }));
+    const data = Array.from(ws.querySelectorAll('.block-workspace > .streech-block')).map(b => ({ html: b.outerHTML, left: b.style.left, top: b.style.top, val: b.querySelector('.block-input')?.value }));
     localStorage.setItem('streech_blocks', JSON.stringify(data)); localStorage.setItem('streech_name', iName ? iName.value : 'Sprite1');
     const alert = document.createElement('div'); alert.style.cssText = "position:fixed; top:60px; left:50%; transform:translateX(-50%); background:#00d631; color:white; padding:8px 24px; border-radius:20px; font-size:0.8rem; font-weight:bold; z-index:9999;";
     alert.textContent = "プロジェクトを保存しました！"; document.body.appendChild(alert); setTimeout(() => alert.remove(), 1500);
@@ -66,8 +71,8 @@ window.addEventListener('DOMContentLoaded', () => {
       JSON.parse(sB).forEach(d => {
         const div = document.createElement('div'); div.innerHTML = d.html; const rb = div.firstChild;
         rb.style.position = 'absolute'; rb.style.left = d.left; rb.style.top = d.top;
-        const inp = rb.querySelector('.block-input'); if (inp && d.val) { inp.value = d.val; inp.style.pointerEvents = 'auto'; }
         ws.appendChild(rb); attachTouch(rb, false);
+        rb.querySelectorAll('.streech-block').forEach(child => attachTouch(child, false));
       });
     } else {
       const hat = document.createElement('div'); hat.className = 'streech-block block-events hat-block'; hat.style.cssText = 'position:absolute; left:40px; top:40px;';
@@ -78,29 +83,43 @@ window.addEventListener('DOMContentLoaded', () => {
 
   function attachTouch(block, isPal = false) {
     block.addEventListener('touchstart', (e) => {
-      if (e.target.classList.contains('block-input') || isPaused) return;
-      const t = e.touches, r = block.getBoundingClientRect(); tx = t.clientX - r.left; ty = t.clientY - r.top;
+      if (e.target.classList.contains('block-input') || isPaused) return; e.stopPropagation();
+      const t = e.touches[0], r = block.getBoundingClientRect(); tx = t.clientX - r.left; ty = t.clientY - r.top;
       if (isPal) {
         activeBlk = block.cloneNode(true); const inp = activeBlk.querySelector('.block-input'); if (inp) inp.style.pointerEvents = 'auto';
         activeBlk.style.cssText = `position:fixed; z-index:1000; opacity:0.8; left:${t.clientX - tx}px; top:${t.clientY - ty}px;`; document.body.appendChild(activeBlk);
-      } else { activeBlk = block; activeBlk.style.zIndex = '1000'; }
+      } else {
+        activeBlk = block; activeBlk.style.zIndex = '1000';
+        // 🛠️ 【機能追加】すでに他のブロックの子になっている場合、そこから切り離して自由な絶対座標へ復元して移動
+        if (block.parentElement.classList.contains('streech-block') || block.parentNode !== $('#streech-workspace')) {
+          const ws = $('#streech-workspace'), wR = ws.getBoundingClientRect();
+          activeBlk.style.position = 'absolute'; activeBlk.style.left = `${r.left - wR.left}px`; activeBlk.style.top = `${r.top - wR.top}px`;
+          ws.appendChild(activeBlk);
+        }
+      }
     }, { passive: true });
 
     block.addEventListener('touchmove', (e) => {
-      if (!activeBlk) return; e.preventDefault(); const t = e.touches; activeBlk.style.left = `${t.clientX - tx}px`; activeBlk.style.top = `${t.clientY - ty}px`;
+      if (!activeBlk) return; e.preventDefault(); const t = e.touches[0]; activeBlk.style.left = `${t.clientX - tx}px`; activeBlk.style.top = `${t.clientY - ty}px`;
     }, { passive: false });
 
-    block.addEventListener('touchend', () => {
+    block.addEventListener('touchend', (e) => {
       if (!activeBlk) return; const ws = $('#streech-workspace'), wR = ws.getBoundingClientRect(), bR = activeBlk.getBoundingClientRect();
+      const palR = $('.block-palette').getBoundingClientRect(); const t = e.changedTouches[0];
+      if (t.clientX >= palR.left && t.clientX <= palR.right && t.clientY >= palR.top && t.clientY <= palR.bottom) { activeBlk.remove(); activeBlk = null; return; }
       const dX = bR.left - wR.left, dY = bR.top - wR.top;
       if (bR.right > wR.left && bR.left < wR.right && bR.bottom > wR.top && bR.top < wR.top + ws.offsetHeight) {
-        activeBlk.style.cssText = `position:absolute; opacity:1; z-index:5; left:${dX}px; top:${dY}px;`;
+        activeBlk.style.cssText = `position:absolute; opacity:1; z-index:5; left:${dX}px; top:${dY}px;`; let snap = null;
         ws.querySelectorAll('.streech-block').forEach(ex => {
-          if (ex !== activeBlk && Math.abs(dX - (parseFloat(ex.style.left) || 0)) < 35 && Math.abs(dY - ((parseFloat(ex.style.top) || 0) + ex.offsetHeight)) < 35) {
-            activeBlk.style.left = `${parseFloat(ex.style.left) || 0}px`; activeBlk.style.top = `${(parseFloat(ex.style.top) || 0) + ex.offsetHeight + 2}px`;
-          }
+          if (ex === activeBlk || ex.contains(activeBlk)) return;
+          const exR = ex.getBoundingClientRect(), exX = exR.left - wR.left, exY = exR.top - wR.top;
+          if (Math.abs(dX - exX) < 35 && Math.abs(dY - (exY + ex.offsetHeight)) < 35) snap = ex;
         });
-        ws.appendChild(activeBlk); if (isPal) attachTouch(activeBlk, false);
+        if (snap) {
+          activeBlk.style.cssText = `position: relative; left: 0px; top: 2px; display: flex; z-index: 5; margin-top: 2px;`;
+          snap.appendChild(activeBlk);
+        } else { ws.appendChild(activeBlk); }
+        if (isPal) attachTouch(activeBlk, false);
       } else { activeBlk.remove(); }
       activeBlk = null;
     });
