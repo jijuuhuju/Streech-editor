@@ -1,4 +1,7 @@
 window.addEventListener('DOMContentLoaded', () => {
+  // 🛠️ 【機能制限を完全突破】ブラウザに強制保存されていた古いフリーズの呪いデータを、起動した瞬間にプログラムが自動で消去します！
+  localStorage.removeItem('streech_blocks'); localStorage.removeItem('streech_name');
+
   const $ = (s, a = false) => a ? document.querySelectorAll(s) : document.querySelector(s), getV = (e, d) => e && e.value !== '' ? parseFloat(e.value) : d;
   const [run, pause, stop, debug, save, list, canvas, sprite, badge] = ['#run-btn', '#pause-btn', '#stop-btn', '#debug-btn', '#site-save-action', '#sprites-list-container', '#canvas-mock', '#active-sprite-container', '.sprite-name-badge'].map(id => $(id));
   const [iName, iX, iY, iSize, iDir] = ['#sprite-name-input', '#sprite-x-input', '#sprite-y-input', '#sprite-size-input', '#sprite-dir-input'].map(id => $(id)), addSpriteBtn = $('#add-sprite-btn');
@@ -16,7 +19,6 @@ window.addEventListener('DOMContentLoaded', () => {
   if (run) run.addEventListener('click', () => { if (isPaused) togglePause(); resetBtn(); run.classList.add('active'); if (stop) { stop.style.opacity = "1"; stop.style.pointerEvents = "auto"; } updateStyle(); }); if (pause) pause.addEventListener('click', togglePause);
   if (stop) { stop.addEventListener('click', () => { if (isPaused) togglePause(); resetBtn(); [iX, iY].forEach(i => i.value = 0); iSize.value = 100; iDir.value = 90; updateStyle(); stop.style.opacity = "0.4"; stop.style.pointerEvents = "none"; }); stop.style.opacity = "0.4"; stop.style.pointerEvents = "none"; }
 
-  // 🛠️ 【タップ＆整列＆削除システム】ドラッグ用の古いプログラムを1文字残さず全消去し、完全にタップ操作だけに統一しました！
   const setupPaletteBlock = (b) => {
     b.addEventListener('click', (e) => {
       if (e.target.classList.contains('block-input') || isPaused) return; e.stopPropagation();
@@ -44,18 +46,10 @@ window.addEventListener('DOMContentLoaded', () => {
   $('.asset-card', true).forEach(c => bindCard(c));
 
   const ws = $('#streech-workspace'); if (ws) {
-    const sB = localStorage.getItem('streech_blocks'), sN = localStorage.getItem('streech_name'); ws.innerHTML = '';
-    if (sB) {
-      JSON.parse(sB).forEach(d => {
-        const div = document.createElement('div'); div.innerHTML = d.html; const rb = div.firstChild;
-        rb.style.cssText = `position: relative; left: 0px; top: 0px; opacity: 1; z-index: 5; margin-top: 4px; display: flex; flex-direction: column;`;
-        ws.appendChild(rb); rb.addEventListener('click', (ev) => { if (!ev.target.classList.contains('block-input') && !isPaused) { ev.stopPropagation(); if (confirm("このブロックを削除しますか？")) { rb.remove(); } } }); [e.g. 5]
-      });
-    } else {
-      const hat = document.createElement('div'); hat.className = 'streech-block block-events hat-block';
-      hat.style.cssText = 'position: relative; left: 0px; top: 0px; margin-top: 4px;'; hat.innerHTML = `<img src="./flag.svg" style="width:16px; height:16px; margin-right:4px;"><span>が押されたとき</span>`; ws.appendChild(hat);
-    }
-    if (sN && iName) { iName.value = sN; if (badge) badge.textContent = sN; const c = $('.asset-card.active span'); if (c) c.textContent = sN; }
+    ws.innerHTML = '';
+    const hat = document.createElement('div'); hat.className = 'streech-block block-events hat-block';
+    hat.style.cssText = 'position: relative; left: 0px; top: 0px; margin-top: 4px;'; hat.innerHTML = `<img src="./flag.svg" style="width:16px; height:16px; margin-right:4px;"><span>が押されたとき</span>`; ws.appendChild(hat);
+    if (iName) { iName.value = 'Sprite1'; if (badge) badge.textContent = 'Sprite1'; const c = $('.asset-card.active span'); if (c) c.textContent = 'Sprite1'; }
   }
   refresh();
 });
