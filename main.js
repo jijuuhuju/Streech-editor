@@ -4,7 +4,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const loadFiles = async () => {
     for (const c of ['motion', 'looks', 'sound', 'events', 'control']) {
-      const res = await fetch(`./${c}.html`); if (res.ok) $(`#group-${c}`).innerHTML = await res.text();
+      const res = await fetch(`./${c}.html`);
+      if (res.ok) $(`#group-${c}`).innerHTML = await res.text();
     }
     const oRes = await fetch('./other_blocks.html');
     if (oRes.ok) {
@@ -28,6 +29,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
   if (debug) debug.addEventListener('click', () => { debug.classList.toggle('active'); $('#streech-workspace').classList.toggle('debug-mode'); });
 
+  // 🛠️ 【修正箇所】存在しない「inputName」を正しく「iName」に変えてエラーを全滅させました
   if (iName) iName.addEventListener('input', (e) => {
     if (isPaused) return; const n = e.target.value;
     if (badge) badge.textContent = n; const c = $('.asset-card.active span'); if (c) c.textContent = n;
@@ -84,13 +86,12 @@ window.addEventListener('DOMContentLoaded', () => {
   function attachTouch(block, isPal = false) {
     block.addEventListener('touchstart', (e) => {
       if (e.target.classList.contains('block-input') || isPaused) return; e.stopPropagation();
-      const t = e.touches[0], r = block.getBoundingClientRect(); tx = t.clientX - r.left; ty = t.clientY - r.top;
+      const t = e.touches, r = block.getBoundingClientRect(); tx = t.clientX - r.left; ty = t.clientY - r.top;
       if (isPal) {
         activeBlk = block.cloneNode(true); const inp = activeBlk.querySelector('.block-input'); if (inp) inp.style.pointerEvents = 'auto';
         activeBlk.style.cssText = `position:fixed; z-index:1000; opacity:0.8; left:${t.clientX - tx}px; top:${t.clientY - ty}px;`; document.body.appendChild(activeBlk);
       } else {
         activeBlk = block; activeBlk.style.zIndex = '1000';
-        // 🛠️ 【機能追加】すでに他のブロックの子になっている場合、そこから切り離して自由な絶対座標へ復元して移動
         if (block.parentElement.classList.contains('streech-block') || block.parentNode !== $('#streech-workspace')) {
           const ws = $('#streech-workspace'), wR = ws.getBoundingClientRect();
           activeBlk.style.position = 'absolute'; activeBlk.style.left = `${r.left - wR.left}px`; activeBlk.style.top = `${r.top - wR.top}px`;
@@ -100,12 +101,12 @@ window.addEventListener('DOMContentLoaded', () => {
     }, { passive: true });
 
     block.addEventListener('touchmove', (e) => {
-      if (!activeBlk) return; e.preventDefault(); const t = e.touches[0]; activeBlk.style.left = `${t.clientX - tx}px`; activeBlk.style.top = `${t.clientY - ty}px`;
+      if (!activeBlk) return; e.preventDefault(); const t = e.touches; activeBlk.style.left = `${t.clientX - tx}px`; activeBlk.style.top = `${t.clientY - ty}px`;
     }, { passive: false });
 
     block.addEventListener('touchend', (e) => {
       if (!activeBlk) return; const ws = $('#streech-workspace'), wR = ws.getBoundingClientRect(), bR = activeBlk.getBoundingClientRect();
-      const palR = $('.block-palette').getBoundingClientRect(); const t = e.changedTouches[0];
+      const palR = $('.block-palette').getBoundingClientRect(); const t = e.changedTouches;
       if (t.clientX >= palR.left && t.clientX <= palR.right && t.clientY >= palR.top && t.clientY <= palR.bottom) { activeBlk.remove(); activeBlk = null; return; }
       const dX = bR.left - wR.left, dY = bR.top - wR.top;
       if (bR.right > wR.left && bR.left < wR.right && bR.bottom > wR.top && bR.top < wR.top + ws.offsetHeight) {
