@@ -34,8 +34,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const sB = localStorage.getItem('streech_blocks'), sN = localStorage.getItem('streech_name'); ws.innerHTML = '';
     if (sB) {
       JSON.parse(sB).forEach(d => {
-        // 🛠️ 【クラッシュバグ完全修正】すべてのボタンが復活し、保存データも完璧に復元できるよう修理しました！
-        const targetBlock = Array.from($('.block-palette .streech-block', true)).find(b => b.textContent === d.text); if (!targetBlock) return;
+        const targetBlock = Array.from(document.querySelectorAll('.block-palette .streech-block')).find(b => b.textContent === d.text); if (!targetBlock) return;
         const rb = targetBlock.cloneNode(true); rb.style.cssText = `position: relative; left: 0px; top: 0px; opacity: 1; z-index: 5; margin-top: 4px; display: flex; flex-direction: column;`;
         const inp = rb.querySelector('.block-input'); if (inp && d.val !== '') inp.value = d.val;
         const wrapSlot = ws.querySelector('.wrap-slot'); if (wrapSlot && !d.isHat) { wrapSlot.appendChild(rb); } else { ws.appendChild(rb); }
