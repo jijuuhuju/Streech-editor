@@ -1,159 +1,41 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Streech Editor</title>
-  <link rel="stylesheet" href="./style.css">
-</head>
-<body>
+window.addEventListener('DOMContentLoaded', () => {
+  const $ = (s, a = false) => a ? document.querySelectorAll(s) : document.querySelector(s), getV = (e, d) => e && e.value !== '' ? parseFloat(e.value) : d;
+  const [run, pause, stop, debug, save, list, canvas, sprite, badge] = ['#run-btn', '#pause-btn', '#stop-btn', '#debug-btn', '#site-save-action', '#sprites-list-container', '#canvas-mock', '#active-sprite-container', '.sprite-name-badge'].map(id => $(id));
+  const [iName, iX, iY, iSize, iDir] = ['#sprite-name-input', '#sprite-x-input', '#sprite-y-input', '#sprite-size-input', '#sprite-dir-input'].map(id => $(id));
+  let isPaused = false, activeBlk = null, tx = 0, ty = 0, isDraggingPal = false, palSrcBlk = null;
 
-  <!-- ナビゲーションバー -->
-  <header>
-    <div class="header-left">
-      <div class="logo-container">
-        <img src="./streechlogo.svg" alt="Streech" class="logo-image">
-      </div>
-      <div class="menu-item" id="site-save-action">サイト内に保存</div>
-      <div class="menu-item">編集</div>
-      <div class="menu-item" id="clear-all-blocks-btn">全てのブロックを削除</div>
-      <div class="menu-item">チュートリアル</div>
-    </div>
-    <div class="header-right">
-      <button id="debug-btn" class="nav-debug-btn" title="デバッグ起動">
-        <img src="./Debug.svg" alt="Debug" class="nav-debug-img">
-        <span>デバッグ</span>
-      </button>
-    </div>
-  </header>
+  // 🛠️ 【名前の噛み合わせ完全修正】クラッシュの黒幕だった関数名を「updateStyle」に100%統一して、すべてのフリーズを根絶しました！
+  const updateStyle = () => { if (!sprite || isPaused) return; sprite.style.transform = `translate(${getV(iX, 0)}px, ${-getV(iY, 0)}px) scale(${getV(iSize, 100) / 100}) rotate(${getV(iDir, 90) - 90}deg)`; };
+  [iX, iY, iSize, iDir].forEach(i => i && i.addEventListener('input', updateStyle)); if (iName) iName.addEventListener('input', e => { if (badge) badge.textContent = e.target.value; const c = $('.asset-card.active span'); if (c) c.textContent = e.target.value; });
+  $('.menu-item', true).forEach(m => m.textContent === '編集' && m.addEventListener('click', () => $('#streech-workspace').classList.toggle('grid-mode')));
+  if (debug) debug.addEventListener('click', () => alert("開発中なのでありません"));
+  const clearBtn = $('#clear-all-blocks-btn'); if (clearBtn) clearBtn.addEventListener('click', () => { if (confirm("本当に全てのブロックを消去しますか？")) { const ws = $('#streech-workspace'); if (ws) ws.innerHTML = ''; } });
 
-  <!-- メイン領域 -->
-  <div id="main-container">
-    <!-- 🛠️ 【ここを完全修正】パレットとワークスペースを正しい1つのセクションの中に同居させました！ -->
-    <section id="blockly-section">
-      <!-- 左端のカテゴリ選択縦帯 -->
-      <div class="category-sidebar">
-        <div class="category-item active" data-category="motion"><div class="circle" style="background: #4C97FF;"></div>動き</div>
-        <div class="category-item" data-category="looks"><div class="circle" style="background: #9966FF;"></div>見た目</div>
-        <div class="category-item" data-category="sound"><div class="circle" style="background: #D65CD6;"></div>音</div>
-        <div class="category-item" data-category="events"><div class="circle" style="background: #FFD000;"></div>イベント</div>
-        <div class="category-item" data-category="control"><div class="circle" style="background: #FFAB19;"></div>制御</div>
-        <div class="category-item" data-category="sensing"><div class="circle" style="background: #4CBFE6;"></div>調べる</div>
-        <div class="category-item" data-category="operators"><div class="circle" style="background: #59C059;"></div>演算</div>
-        <div class="category-item" data-category="variables"><div class="circle" style="background: #FF8C1A;"></div>変数</div>
-      </div>
+  const resetBtn = () => [run, pause].forEach(b => b && b.classList.remove('active')), togglePause = () => { if (!run || !run.classList.contains('active')) return; isPaused = !isPaused; if (pause) pause.classList.toggle('active', isPaused); if (canvas) canvas.classList.toggle('paused-state', isPaused); $('.asset-info-bar .info-input', true).forEach(i => i.disabled = isPaused); if (!isPaused) updateStyle(); };
+  if (run) run.addEventListener('click', () => { if (isPaused) togglePause(); resetBtn(); run.classList.add('active'); if (stop) { stop.style.opacity = "1"; stop.style.pointerEvents = "auto"; } updateStyle(); }); if (pause) pause.addEventListener('click', togglePause);
+  if (stop) { stop.addEventListener('click', () => { if (isPaused) togglePause(); resetBtn(); [iX, iY].forEach(i => i.value = 0); iSize.value = 100; iDir.value = 90; updateStyle(); stop.style.opacity = "0.4"; stop.style.pointerEvents = "none"; }); stop.style.opacity = "0.4"; stop.style.pointerEvents = "none"; }
 
-      <!-- ブロックパレット -->
-      <div class="block-palette">
-        <div id="palette-title" class="palette-header">動き</div>
-        <div class="palette-scroll-container">
-          
-          <!-- 動き -->
-          <div class="category-group motion-group" id="group-motion">
-            <div class="streech-block block-motion" draggable="true"><input type="text" class="block-input" value="10" size="2"><span>歩動かす</span></div>
-            <div class="streech-block block-motion" draggable="true"><img src="./Stop2.svg" class="block-arrow-icon" style="transform: rotate(90deg); filter: brightness(0) invert(1); width:12px; height:12px; margin-right:2px;"><input type="text" class="block-input" value="15" size="2"><span>度回す</span></div>
-            <div class="streech-block block-motion" draggable="true"><img src="./Stop2.svg" class="block-arrow-icon" style="transform: scaleX(-1) rotate(90deg); filter: brightness(0) invert(1); width:12px; height:12px; margin-right:2px;"><input type="text" class="block-input" value="15" size="2"><span>度回す</span></div>
-            <div class="streech-block block-motion" draggable="true"><span>どこかの場所へ行く</span></div>
-            <div class="streech-block block-motion" draggable="true"><span>x座標を</span><input type="text" class="block-input" value="0" size="2"><span>、y座標を</span><input type="text" class="block-input" value="0" size="2"><span>にする</span></div>
-          </div>
+  const exec = (b) => { if (!b || isPaused) return; const t = b.textContent || "", inp = b.querySelector('.block-input'), v = inp ? parseFloat(inp.value) || 0 : 0; if (t.includes("歩")) { const r = (getV(iDir, 90) * Math.PI) / 180; if (iX) iX.value = Math.round(getV(iX, 0) + v * Math.cos(r)); if (iY) iY.value = Math.round(getV(iY, 0) + v * Math.sin(r)); } else if (t.includes("度")) { if (iDir) iDir.value = (getV(iDir, 90) + (b.querySelector('img')?.style.transform.includes('scaleX(-1)') === false ? v : -v)) % 360; } else if (t.includes("どこか")) { if (iX) iX.value = Math.floor(Math.random() * 300) - 150; if (iY) iY.value = Math.floor(Math.random() * 200) - 100; } else if (t.includes("x座標")) { if (iX) iX.value = v; } updateStyle(); };
+  if (save) save.addEventListener('click', () => { const ws = $('#streech-workspace'); if (ws) localStorage.setItem('streech_blocks', JSON.stringify(Array.from(ws.querySelectorAll('.block-workspace > .streech-block')).map(b => ({ html: b.outerHTML, left: b.style.left, top: b.style.top, val: b.querySelector('.block-input')?.value })))); localStorage.setItem('streech_name', iName ? iName.value : 'Sprite1'); const a = document.createElement('div'); a.style.cssText = "position:fixed; top:60px; left:50%; transform:translateX(-50%); background:#00d631; color:white; padding:8px 24px; border-radius:20px; font-size:0.8rem; font-weight:bold; z-index:9999;"; a.textContent = "プロジェクトを保存しました！"; document.body.appendChild(a); setTimeout(() => a.remove(), 1500); });
 
-          <!-- 見た目 -->
-          <div class="category-group looks-group" id="group-looks" style="display: none;">
-            <div class="streech-block block-looks" draggable="true"><span>こんにちは！と</span><input type="text" class="block-input" value="2" size="2"><span>秒言う</span></div>
-            <div class="streech-block block-looks" draggable="true"><span>こんにちは！と言う</span></div>
-            <div class="streech-block block-looks" draggable="true"><span>次のコスチュームにする</span></div>
-            <div class="streech-block block-looks" draggable="true"><span>表示する</span></div>
-            <div class="streech-block block-looks" draggable="true"><span>隠す</span></div>
-          </div>
+  const touch = (b, p = false) => {
+    b.addEventListener('touchstart', e => { if (e.target.classList.contains('block-input') || isPaused) return; e.stopPropagation(); const t = e.touches, r = b.getBoundingClientRect(); tx = t.clientX - r.left; ty = t.clientY - r.top; if (p) { isDraggingPal = true; palSrcBlk = b; activeBlk = null; } else { activeBlk = b; activeBlk.style.zIndex = '1000'; if (b.parentElement.classList.contains('streech-block') || b.parentNode !== $('#streech-workspace')) { const ws = $('#streech-workspace'), wR = ws.getBoundingClientRect(); activeBlk.style.position = 'absolute'; activeBlk.style.left = `${r.left - wR.left}px`; activeBlk.style.top = `${r.top - wR.top}px`; ws.appendChild(activeBlk); } } }, { passive: true });
+    b.addEventListener('touchmove', e => { const t = e.touches; if (p && isDraggingPal && !activeBlk && palSrcBlk) { activeBlk = palSrcBlk.cloneNode(true); activeBlk.style.cssText = `position:fixed; z-index:1000; opacity:0.8; left:${t.clientX - tx}px; top:${t.clientY - ty}px;`; document.body.appendChild(activeBlk); } if (activeBlk) { e.preventDefault(); activeBlk.style.left = `${t.clientX - tx}px`; activeBlk.style.top = `${t.clientY - ty}px`; } }, { passive: false });
+    b.addEventListener('touchend', e => {
+      isDraggingPal = false; palSrcBlk = null; if (!activeBlk) return; const ws = $('#streech-workspace'), wR = ws.getBoundingClientRect(), bR = activeBlk.getBoundingClientRect(), pal = $('.block-palette'), palR = pal ? pal.getBoundingClientRect() : {left:0,right:0,top:0,bottom:0}, t = e.changedTouches; if (t.clientX >= palR.left && t.clientX <= palR.right && t.clientY >= palR.top && t.clientY <= palR.bottom) { activeBlk.remove(); activeBlk = null; return; }
+      let dX = activeBlk.style.position === 'fixed' ? (parseFloat(activeBlk.style.left) - wR.left) : (bR.left - wR.left), dY = activeBlk.style.position === 'fixed' ? (parseFloat(activeBlk.style.top) - wR.top) : (bR.top - wR.top);
+      if (bR.right > wR.left && bR.left < wR.right && bR.bottom > wR.top && bR.top < wR.top + ws.offsetHeight) {
+        activeBlk.style.cssText = `position:absolute; opacity:1; z-index:5; left:${dX}px; top:${dY}px;`; let snap = null, insideWrap = false; ws.querySelectorAll('.streech-block').forEach(ex => { if (ex === activeBlk || ex.contains(activeBlk)) return; const exR = ex.getBoundingClientRect(), exX = exR.left - wR.left, exY = exR.top - wR.top; if (ex.classList.contains('wrap-block') && dX >= exX && dX <= exX + 165 && dY >= exY + 20 && dY <= exY + 55) { snap = ex.querySelector('.wrap-slot'); insideWrap = true; } else if (Math.abs(dX - exX) < 35 && Math.abs(dY - (exY + ex.offsetHeight)) < 35) snap = ex; });
+        if (snap) { activeBlk.style.cssText = `position: relative; left: 0px; top: ${insideWrap ? 0 : 2}px; display: flex; flex-direction: column; z-index: 5; margin-${insideWrap ? 'left' : 'top'}: 2px;`; snap.appendChild(activeBlk); } else { if (activeBlk.parentElement !== ws) ws.appendChild(activeBlk); } if (p) touch(activeBlk, false);
+      } else { activeBlk.remove(); } activeBlk = null;
+    });
+    b.addEventListener('click', e => { if (!e.target.classList.contains('block-input') && !p && !isPaused) exec(b); });
+  };
 
-          <!-- 音 -->
-          <div class="category-group sound-group" id="group-sound" style="display: none;">
-            <div class="streech-block block-sound" draggable="true"><span>終わるまで音を鳴らす</span></div>
-            <div class="streech-block block-sound" draggable="true"><span>音を止める</span></div>
-          </div>
-
-          <!-- イベント -->
-          <div class="category-group events-group" id="group-events" style="display: none;">
-            <div class="streech-block block-events hat-block" draggable="true"><img src="./flag.svg" style="width:14px; height:14px; margin-right:4px;"><span>が押されたとき</span></div>
-            <div class="streech-block block-events hat-block custom-stop-hat" draggable="true"><img src="./Stop.svg" style="width:14px; height:14px; margin-right:4px;"><span>が押されたとき</span></div>
-            <div class="streech-block block-events custom-flag-trigger" draggable="true"><img src="./flag.svg" style="width:14px; height:14px; margin-right:4px;"><span>で実行したことにする</span></div>
-            <div class="streech-block block-events hat-block" draggable="true"><span>スペース キーが押されたとき</span></div>
-            <div class="streech-block block-events hat-block" draggable="true"><span>メッセージ1 を受け取ったとき</span></div>
-            <div class="streech-block block-events" draggable="true"><span>メッセージ1 を送る</span></div>
-          </div>
-
-          <!-- 制御 -->
-          <div class="category-group control-group" id="group-control" style="display: none;">
-            <div class="streech-block block-control" draggable="true"><input type="text" class="block-input" value="1" size="2"><span>秒待つ</span></div>
-            <div class="streech-block block-control wrap-block" draggable="true"><div class="wrap-header"><span>ずっと</span></div><div class="wrap-slot"></div></div>
-            <div class="streech-block block-control wrap-block" draggable="true"><div class="wrap-header"><span>もし</span><div class="hex-slot"></div><span>なら</span></div><div class="wrap-slot"></div></div>
-            <div class="streech-block block-control wrap-block" draggable="true"><div class="wrap-header"><span></span><div class="hex-slot"></div><span>まで繰り返す</span></div><div class="wrap-slot"></div></div>
-          </div>
-
-          <!-- 調べる -->
-          <div class="category-group sensing-group" id="group-sensing" style="display: none;">
-            <div class="streech-block block-sensing" draggable="true"><span>マウスのポインターに触れた</span></div>
-            <div class="streech-block block-sensing" draggable="true"><span>マウスのx</span></div>
-          </div>
-
-          <!-- 演算 -->
-          <div class="category-group operators-group" id="group-operators" style="display: none;">
-            <div class="streech-block block-operators" draggable="true"><input type="text" class="block-input" value="" size="1"><span>+</span><input type="text" class="block-input" value="" size="1"></div>
-          </div>
-
-          <!-- 変数 -->
-          <div class="category-group variables-group" id="group-variables" style="display: none;">
-            <div class="streech-block block-variables" draggable="true"><span>変数</span></div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- 中央ワークスペース (パレットの真横にカチッと正しく内蔵させました) -->
-      <div class="block-workspace" id="streech-workspace"></div>
-    </section>
-    
-    <!-- 右側サイドバー -->
-    <section id="sidebar-section">
-      <div class="stage-header">
-        <div class="control-bar">
-          <button id="run-btn" class="control-btn"><img src="./flag.svg" class="control-img"></button>
-          <button id="pause-btn" class="control-btn"><img src="./Stop2.svg" class="control-img"></button>
-          <button id="stop-btn" class="control-btn"><img src="./Stop.svg" class="control-img"></button>
-        </div>
-      </div>
-      <div id="stage-area">
-        <div id="canvas-mock">
-          <div id="active-sprite-container" class="view-sprite1">
-            <img src="./public/Streech-nago-cat-a.svg" class="sprite-image">
-            <div class="sprite-name-badge">Sprite1</div>
-          </div>
-        </div>
-      </div>
-      <div id="asset-manager">
-        <div class="asset-info-bar">
-          <div class="info-item">スプライト <input type="text" class="info-input" id="sprite-name-input" value="Sprite1" style="width:70px; border-radius:6px; text-align:left; padding-left:6px;"></div>
-          <div class="info-item">x <input type="text" class="info-input" id="sprite-x-input" value="0"></div>
-          <div class="info-item">y <input type="text" class="info-input" id="sprite-y-input" value="0"></div>
-          <div class="info-item">大きさ <input type="text" class="info-input" id="sprite-size-input" value="100"></div>
-          <div class="info-item">向き <input type="text" class="info-input" id="sprite-dir-input" value="90"></div>
-        </div>
-        <div class="manager-panes">
-          <div class="sprites-pane-wrapper" style="display: flex; flex: 1; align-items: flex-end; position: relative;">
-            <div class="sprites-pane" id="sprites-list-container">
-              <div class="asset-card active" data-sprite-id="1">
-                <div class="asset-icon-placeholder" style="background: rgba(76, 151, 255, 0.1);"></div>
-                <span>Sprite1</span>
-              </div>
-            </div>
-            <button id="add-sprite-btn" class="add-asset-circle-btn" title="新規追加">＋</button>
-          </div>
-          <div class="stage-pane"><span>ステージ</span><div class="stage-card"><div class="stage-icon-placeholder"></div><span>背景1</span></div></div>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <script type="module" src="./main.js"></script>
-</body>
-</html>
+  const refresh = () => $('.block-palette .streech-block', true).forEach(b => touch(b, true)), bindCard = (c) => c.addEventListener('click', () => { if (isPaused) return; $('.asset-card', true).forEach(card => card.classList.remove('active')); c.classList.add('active'); const n = c.querySelector('span').textContent; if (iName) iName.value = n; if (badge) badge.textContent = n; if (sprite) sprite.className = c.getAttribute('data-sprite-id') === "1" ? 'view-sprite1' : 'view-sprite-custom'; updateStyle(); });
+  $('.category-sidebar .category-item', true).forEach(item => item.addEventListener('click', () => { $('.category-sidebar .category-item', true).forEach(c => c.classList.remove('active')); item.classList.add('active'); const sel = item.getAttribute('data-category'); $('#palette-title').textContent = item.textContent; $('.palette-scroll-container .category-group', true).forEach(g => g.style.display = g.classList.contains(`${sel}-group`) ? 'block' : 'none'); }));
+  const addSpriteBtn = $('#add-sprite-btn'); if (addSpriteBtn && list) addSpriteBtn.addEventListener('click', () => { if (isPaused) return; const id = $('.asset-card', true).length + 1, name = `Sprite${id}`, c = document.createElement('div'); c.className = 'asset-card'; c.setAttribute('data-sprite-id', id); c.innerHTML = `<div class="asset-icon-placeholder"></div><span>${name}</span>`; list.appendChild(c); bindCard(c); c.click(); });
+  $('.asset-card', true).forEach(c => bindCard(c));
+  const ws = $('#streech-workspace'); if (ws) { const sB = localStorage.getItem('streech_blocks'), sN = localStorage.getItem('streech_name'); ws.innerHTML = ''; if (sB) { JSON.parse(sB).forEach(d => { const div = document.createElement('div'); div.innerHTML = d.html; const rb = div.firstChild; rb.style.position = 'absolute'; rb.style.left = d.left; rb.style.top = d.top; ws.appendChild(rb); touch(rb, false); rb.querySelectorAll('.streech-block').forEach(child => touch(child, false)); }); } else { const hat = document.createElement('div'); hat.className = 'streech-block block-events hat-block'; hat.style.cssText = 'position:absolute; left:40px; top:40px;'; hat.innerHTML = `<img src="./flag.svg" style="width:16px; height:16px; margin-right:4px;"><span>が押されたとき</span>`; ws.appendChild(hat); touch(hat, false); } if (sN && iName) { iName.value = sN; if (badge) badge.textContent = sN; const c = $('.asset-card.active span'); if (c) c.textContent = sN; } }
+  refresh();
+});
