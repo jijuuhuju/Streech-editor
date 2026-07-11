@@ -8,7 +8,7 @@
 </head>
 <body>
 
-  <!-- 🟢 ナビゲーションバー -->
+  <!-- ナビゲーションバー -->
   <header>
     <div class="header-left">
       <div class="logo-container">
@@ -29,6 +29,7 @@
   <!-- メイン領域 -->
   <div id="main-container">
     <section id="blockly-section">
+      <!-- 左端のカテゴリ選択縦帯 -->
       <div class="category-sidebar">
         <div class="category-item active" data-category="motion"><div class="circle" style="background: #4C97FF;"></div>動き</div>
         <div class="category-item" data-category="looks"><div class="circle" style="background: #9966FF;"></div>見た目</div>
@@ -44,14 +45,65 @@
       <div class="block-palette">
         <div id="palette-title" class="palette-header">動き</div>
         <div class="palette-scroll-container">
-          <div class="category-group motion-group" id="group-motion"></div>
-          <div class="category-group looks-group" id="group-looks" style="display: none;"></div>
-          <div class="category-group sound-group" id="group-sound" style="display: none;"></div>
-          <div class="category-group events-group" id="group-events" style="display: none;"></div>
-          <div class="category-group control-group" id="group-control" style="display: none;"></div>
-          <div class="category-group sensing-group" id="group-sensing" style="display: none;"></div>
-          <div class="category-group operators-group" id="group-operators" style="display: none;"></div>
-          <div class="category-group variables-group" id="group-variables" style="display: none;"></div>
+          
+          <!-- 動き -->
+          <div class="category-group motion-group" id="group-motion">
+            <div class="streech-block block-motion" draggable="true"><input type="text" class="block-input" value="10" size="2"><span>歩動かす</span></div>
+            <div class="streech-block block-motion" draggable="true"><img src="./Stop2.svg" class="block-arrow-icon" style="transform: rotate(90deg); filter: brightness(0) invert(1); width:12px; height:12px; margin-right:2px;"><input type="text" class="block-input" value="15" size="2"><span>度回す</span></div>
+            <div class="streech-block block-motion" draggable="true"><img src="./Stop2.svg" class="block-arrow-icon" style="transform: scaleX(-1) rotate(90deg); filter: brightness(0) invert(1); width:12px; height:12px; margin-right:2px;"><input type="text" class="block-input" value="15" size="2"><span>度回す</span></div>
+            <div class="streech-block block-motion" draggable="true"><span>どこかの場所へ行く</span></div>
+            <div class="streech-block block-motion" draggable="true"><span>x座標を</span><input type="text" class="block-input" value="0" size="2"><span>、y座標を</span><input type="text" class="block-input" value="0" size="2"><span>にする</span></div>
+          </div>
+
+          <!-- 見た目 -->
+          <div class="category-group looks-group" id="group-looks" style="display: none;">
+            <div class="streech-block block-looks" draggable="true"><span>こんにちは！と</span><input type="text" class="block-input" value="2" size="2"><span>秒言う</span></div>
+            <div class="streech-block block-looks" draggable="true"><span>こんにちは！と言う</span></div>
+            <div class="streech-block block-looks" draggable="true"><span>次のコスチュームにする</span></div>
+            <div class="streech-block block-looks" draggable="true"><span>表示する</span></div>
+            <div class="streech-block block-looks" draggable="true"><span>隠す</span></div>
+          </div>
+
+          <!-- 音 -->
+          <div class="category-group sound-group" id="group-sound" style="display: none;">
+            <div class="streech-block block-sound" draggable="true"><span>終わるまで音を鳴らす</span></div>
+            <div class="streech-block block-sound" draggable="true"><span>音を止める</span></div>
+          </div>
+
+          <!-- イベント -->
+          <div class="category-group events-group" id="group-events" style="display: none;">
+            <div class="streech-block block-events hat-block" draggable="true"><img src="./flag.svg" style="width:14px; height:14px; margin-right:4px;"><span>が押されたとき</span></div>
+            <div class="streech-block block-events hat-block custom-stop-hat" draggable="true"><img src="./Stop.svg" style="width:14px; height:14px; margin-right:4px;"><span>が押されたとき</span></div>
+            <div class="streech-block block-events custom-flag-trigger" draggable="true"><img src="./flag.svg" style="width:14px; height:14px; margin-right:4px;"><span>で実行したことにする</span></div>
+            <div class="streech-block block-events hat-block" draggable="true"><span>スペース キーが押されたとき</span></div>
+            <div class="streech-block block-events hat-block" draggable="true"><span>メッセージ1 を受け取ったとき</span></div>
+            <div class="streech-block block-events" draggable="true"><span>メッセージ1 を送る</span></div>
+          </div>
+
+          <!-- 制御 -->
+          <div class="category-group control-group" id="group-control" style="display: none;">
+            <div class="streech-block block-control" draggable="true"><input type="text" class="block-input" value="1" size="2"><span>秒待つ</span></div>
+            <div class="streech-block block-control wrap-block" draggable="true"><div class="wrap-header"><span>ずっと</span></div><div class="wrap-slot"></div></div>
+            <div class="streech-block block-control wrap-block" draggable="true"><div class="wrap-header"><span>もし</span><div class="hex-slot"></div><span>なら</span></div><div class="wrap-slot"></div></div>
+            <div class="streech-block block-control wrap-block" draggable="true"><div class="wrap-header"><span></span><div class="hex-slot"></div><span>まで繰り返す</span></div><div class="wrap-slot"></div></div>
+          </div>
+
+          <!-- 調べる -->
+          <div class="category-group sensing-group" id="group-sensing" style="display: none;">
+            <div class="streech-block block-sensing" draggable="true"><span>マウスのポインターに触れた</span></div>
+            <div class="streech-block block-sensing" draggable="true"><span>マウスのx</span></div>
+          </div>
+
+          <!-- 演算 -->
+          <div class="category-group operators-group" id="group-operators" style="display: none;">
+            <div class="streech-block block-operators" draggable="true"><input type="text" class="block-input" value="" size="1"><span>+</span><input type="text" class="block-input" value="" size="1"></div>
+          </div>
+
+          <!-- 変数 -->
+          <div class="category-group variables-group" id="group-variables" style="display: none;">
+            <div class="streech-block block-variables" draggable="true"><span>変数</span></div>
+          </div>
+
         </div>
       </div>
 
