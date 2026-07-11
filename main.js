@@ -2,34 +2,18 @@ window.addEventListener('DOMContentLoaded', () => {
   const $ = (s, all = false) => all ? document.querySelectorAll(s) : document.querySelector(s);
   const getV = (el, def) => el && el.value !== '' ? parseFloat(el.value) : def;
 
-  const loadFiles = async () => {
-    for (const c of ['motion', 'looks', 'sound', 'events', 'control']) {
-      const res = await fetch(`./${c}.html`);
-      if (res.ok) $(`#group-${c}`).innerHTML = await res.text();
-    }
-    const oRes = await fetch('./other_blocks.html');
-    if (oRes.ok) {
-      const t = document.createElement('div'); t.innerHTML = await oRes.text();
-      ['sensing', 'operators', 'variables'].forEach(k => $(`#group-${k}`).appendChild(t.querySelector(`.block-${k}`)));
-    }
-    refreshPalette(); loadProject();
-  };
-
-  const [run, pause, stop, debug, save, addBtn, list, canvas] = 
-    ['#run-btn', '#pause-btn', '#stop-btn', '#debug-btn', '#site-save-action', '#add-sprite-btn', '#sprites-list-container', '#canvas-mock'].map(id => $(id));
-  const [iName, iX, iY, iSize, iDir] = ['#sprite-name-input', '#sprite-x-input', '#sprite-y-input', '#sprite-size-input', '#sprite-dir-input'].map(id => $(id));
-  const [sprite, badge] = ['#active-sprite-container', '.sprite-name-badge'].map(s => $(s));
+  const run = $('#run-btn'), pause = $('#pause-btn'), stop = $('#stop-btn'), debug = $('#debug-btn');
+  const save = $('#site-save-action'), addBtn = '#add-sprite-btn', list = $('#sprites-list-container'), canvas = $('#canvas-mock');
+  const iName = $('#sprite-name-input'), iX = $('#sprite-x-input'), iY = $('#sprite-y-input'), iSize = $('#sprite-size-input'), iDir = $('#sprite-dir-input');
+  const sprite = $('#active-sprite-container'), badge = $('.sprite-name-badge');
 
   let isPaused = false, activeBlk = null, tx = 0, ty = 0;
   $('.asset-info-bar .info-input', true).forEach(i => { i.removeAttribute('readonly'); i.style.pointerEvents = 'auto'; });
 
   const menuItems = $('.menu-item', true);
-  if (menuItems && menuItems) {
-    menuItems.addEventListener('click', () => $('#streech-workspace').classList.toggle('grid-mode'));
-  }
+  if (menuItems && menuItems) menuItems.addEventListener('click', () => $('#streech-workspace').classList.toggle('grid-mode'));
   if (debug) debug.addEventListener('click', () => { debug.classList.toggle('active'); $('#streech-workspace').classList.toggle('debug-mode'); });
 
-  // 🛠️ 【修正箇所】存在しない「inputName」を正しく「iName」に変えてエラーを全滅させました
   if (iName) iName.addEventListener('input', (e) => {
     if (isPaused) return; const n = e.target.value;
     if (badge) badge.textContent = n; const c = $('.asset-card.active span'); if (c) c.textContent = n;
@@ -73,8 +57,7 @@ window.addEventListener('DOMContentLoaded', () => {
       JSON.parse(sB).forEach(d => {
         const div = document.createElement('div'); div.innerHTML = d.html; const rb = div.firstChild;
         rb.style.position = 'absolute'; rb.style.left = d.left; rb.style.top = d.top;
-        ws.appendChild(rb); attachTouch(rb, false);
-        rb.querySelectorAll('.streech-block').forEach(child => attachTouch(child, false));
+        ws.appendChild(rb); attachTouch(rb, false); rb.querySelectorAll('.streech-block').forEach(child => attachTouch(child, false));
       });
     } else {
       const hat = document.createElement('div'); hat.className = 'streech-block block-events hat-block'; hat.style.cssText = 'position:absolute; left:40px; top:40px;';
@@ -94,19 +77,16 @@ window.addEventListener('DOMContentLoaded', () => {
         activeBlk = block; activeBlk.style.zIndex = '1000';
         if (block.parentElement.classList.contains('streech-block') || block.parentNode !== $('#streech-workspace')) {
           const ws = $('#streech-workspace'), wR = ws.getBoundingClientRect();
-          activeBlk.style.position = 'absolute'; activeBlk.style.left = `${r.left - wR.left}px`; activeBlk.style.top = `${r.top - wR.top}px`;
-          ws.appendChild(activeBlk);
+          activeBlk.style.position = 'absolute'; activeBlk.style.left = `${r.left - wR.left}px`; activeBlk.style.top = `${r.top - wR.top}px`; ws.appendChild(activeBlk);
         }
       }
     }, { passive: true });
 
-    block.addEventListener('touchmove', (e) => {
-      if (!activeBlk) return; e.preventDefault(); const t = e.touches; activeBlk.style.left = `${t.clientX - tx}px`; activeBlk.style.top = `${t.clientY - ty}px`;
-    }, { passive: false });
+    block.addEventListener('touchmove', (e) => { if (activeBlk) { e.preventDefault(); const t = e.touches; activeBlk.style.left = `${t.clientX - tx}px`; activeBlk.style.top = `${t.clientY - ty}px`; } }, { passive: false });
 
     block.addEventListener('touchend', (e) => {
       if (!activeBlk) return; const ws = $('#streech-workspace'), wR = ws.getBoundingClientRect(), bR = activeBlk.getBoundingClientRect();
-      const palR = $('.block-palette').getBoundingClientRect(); const t = e.changedTouches;
+      const palR = $('.block-palette').getBoundingClientRect(), t = e.changedTouches;
       if (t.clientX >= palR.left && t.clientX <= palR.right && t.clientY >= palR.top && t.clientY <= palR.bottom) { activeBlk.remove(); activeBlk = null; return; }
       const dX = bR.left - wR.left, dY = bR.top - wR.top;
       if (bR.right > wR.left && bR.left < wR.right && bR.bottom > wR.top && bR.top < wR.top + ws.offsetHeight) {
@@ -116,10 +96,7 @@ window.addEventListener('DOMContentLoaded', () => {
           const exR = ex.getBoundingClientRect(), exX = exR.left - wR.left, exY = exR.top - wR.top;
           if (Math.abs(dX - exX) < 35 && Math.abs(dY - (exY + ex.offsetHeight)) < 35) snap = ex;
         });
-        if (snap) {
-          activeBlk.style.cssText = `position: relative; left: 0px; top: 2px; display: flex; z-index: 5; margin-top: 2px;`;
-          snap.appendChild(activeBlk);
-        } else { ws.appendChild(activeBlk); }
+        if (snap) { activeBlk.style.cssText = `position: relative; left: 0px; top: 2px; display: flex; z-index: 5; margin-top: 2px;`; snap.appendChild(activeBlk); } else { ws.appendChild(activeBlk); }
         if (isPal) attachTouch(activeBlk, false);
       } else { activeBlk.remove(); }
       activeBlk = null;
@@ -145,11 +122,11 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (addBtn && list) addBtn.addEventListener('click', () => {
+  if (addBtn && list) $(addBtn).addEventListener('click', () => {
     if (isPaused) return; const id = $('.asset-card', true).length + 1, name = `Sprite${id}`, c = document.createElement('div');
     c.className = 'asset-card'; c.setAttribute('data-sprite-id', id); c.innerHTML = `<div class="asset-icon-placeholder"></div><span>${name}</span>`;
     list.appendChild(c); bindCard(c); c.click();
   });
 
-  $('.asset-card', true).forEach(c => bindCard(c)); loadFiles();
+  $('.asset-card', true).forEach(c => bindCard(c)); refreshPalette(); loadProject();
 });
