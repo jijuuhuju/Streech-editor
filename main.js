@@ -1,8 +1,4 @@
-window.addEventListener('DOMContentLoaded', () => {
-  // 🛠️ 【機能制限を完全突破】ブラウザに強制保存されていた古いフリーズの呪いデータを、起動した瞬間にプログラムが自動で消去します！
-  localStorage.removeItem('streech_blocks'); localStorage.removeItem('streech_name');
-
-  const $ = (s, a = false) => a ? document.querySelectorAll(s) : document.querySelector(s), getV = (e, d) => e && e.value !== '' ? parseFloat(e.value) : d;
+window.addEventListener('DOMContentLoaded', () => {const $ = (s, a = false) => a ? document.querySelectorAll(s) : document.querySelector(s), getV = (e, d) => e && e.value !== '' ? parseFloat(e.value) : d;
   const [run, pause, stop, debug, save, list, canvas, sprite, badge] = ['#run-btn', '#pause-btn', '#stop-btn', '#debug-btn', '#site-save-action', '#sprites-list-container', '#canvas-mock', '#active-sprite-container', '.sprite-name-badge'].map(id => $(id));
   const [iName, iX, iY, iSize, iDir] = ['#sprite-name-input', '#sprite-x-input', '#sprite-y-input', '#sprite-size-input', '#sprite-dir-input'].map(id => $(id)), addSpriteBtn = $('#add-sprite-btn');
   let isPaused = false;
