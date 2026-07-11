@@ -11,18 +11,21 @@ window.addEventListener('DOMContentLoaded', () => {
   const clearBtn = $('#clear-all-blocks-btn'); if (clearBtn) clearBtn.addEventListener('click', () => { if (confirm("本当に全てのブロックを消去しますか？")) { const ws = $('#streech-workspace'); if (ws) ws.innerHTML = ''; } });
 
   const resetBtn = () => [run, pause].forEach(b => b && b.classList.remove('active')), togglePause = () => { if (!run || !run.classList.contains('active')) return; isPaused = !isPaused; if (pause) pause.classList.toggle('active', isPaused); if (canvas) canvas.classList.toggle('paused-state', isPaused); $('.asset-info-bar .info-input', true).forEach(i => i.disabled = isPaused); if (!isPaused) updateStyle(); };
-  if (run) run.addEventListener('click', () => { if (isPaused) togglePause(); resetBtn(); run.classList.add('active'); if (stop) { stop.style.opacity = "1"; stop.style.pointerEvents = "auto"; } updateStyle(); }); if (pause) pause.addEventListener('click', togglePause);
+  if (pause) pause.addEventListener('click', togglePause);
   if (stop) { stop.addEventListener('click', () => { if (isPaused) togglePause(); resetBtn(); [iX, iY].forEach(i => i.value = 0); iSize.value = 100; iDir.value = 90; updateStyle(); stop.style.opacity = "0.4"; stop.style.pointerEvents = "none"; }); stop.style.opacity = "0.4"; stop.style.pointerEvents = "none"; }
 
-  // 🛠️ 【実行エンジンの文字判定完全修正】あなたのHTMLパレットの文字（「歩動かす」「度回す」「どこかの場所へ行く」）と1文字のズレもなく完全直結させました！
   const exec = (b) => { if (!b || isPaused) return; const t = b.textContent || "", inp = b.querySelector('.block-input'), v = inp ? parseFloat(inp.value) || 0 : 0; if (t.includes("歩動かす")) { const r = (getV(iDir, 90) * Math.PI) / 180; if (iX) iX.value = Math.round(getV(iX, 0) + v * Math.cos(r)); if (iY) iY.value = Math.round(getV(iY, 0) + v * Math.sin(r)); } else if (t.includes("度回す")) { if (iDir) iDir.value = (getV(iDir, 90) + (b.querySelector('img')?.style.transform.includes('scaleX(-1)') === false ? v : -v)) % 360; } else if (t.includes("どこかの場所へ行く")) { if (iX) iX.value = Math.floor(Math.random() * 300) - 150; if (iY) iY.value = Math.floor(Math.random() * 200) - 100; } else if (t.includes("x座標")) { if (iX) iX.value = v; } updateStyle(); };
+  
+  // 🛠️ 【緑の旗連動エンジン】緑の旗ボタンが押されたとき、エディタ内の全てのブロックをハットブロックを飛ばして上から順に一斉全実行します！
+  if (run) run.addEventListener('click', () => { if (isPaused) togglePause(); resetBtn(); run.classList.add('active'); if (stop) { stop.style.opacity = "1"; stop.style.pointerEvents = "auto"; } const ws = $('#streech-workspace'); if (ws) { ws.querySelectorAll('.streech-block').forEach(b => { if (!b.classList.contains('hat-block')) exec(b); }); } });
   if (save) save.addEventListener('click', () => { const ws = $('#streech-workspace'); if (ws) { const data = Array.from(ws.querySelectorAll('.streech-block')).map(b => ({ text: b.textContent, val: b.querySelector('.block-input')?.value || '', isWrap: b.classList.contains('wrap-block'), isHat: b.classList.contains('hat-block') })); localStorage.setItem('streech_blocks', JSON.stringify(data)); localStorage.setItem('streech_name', iName ? iName.value : 'Sprite1'); } const a = document.createElement('div'); a.style.cssText = "position:fixed; top:60px; left:50%; transform:translateX(-50%); background:#00d631; color:white; padding:8px 24px; border-radius:20px; font-size:0.8rem; font-weight:bold; z-index:9999;"; a.textContent = "プロジェクトを保存しました！"; document.body.appendChild(a); setTimeout(() => a.remove(), 1500); });
 
   const setupPaletteBlock = (b) => {
     b.addEventListener('click', (e) => {
       if (e.target.classList.contains('block-input') || isPaused) return; e.stopPropagation(); const ws = $('#streech-workspace'); if (!ws) return; const clone = b.cloneNode(true); clone.style.cssText = `position: relative; left: 0px; top: 0px; opacity: 1; z-index: 5; margin-top: 4px; display: flex; flex-direction: column;`;
       const wrapSlot = ws.querySelector('.wrap-slot'); if (wrapSlot) { wrapSlot.appendChild(clone); } else { ws.appendChild(clone); }
-      clone.addEventListener('click', (ev) => { if (!ev.target.classList.contains('block-input') && !isPaused) { ev.stopPropagation(); exec(clone); } });
+      // 🛠️ 【確認つき削除機能の完全復活】エディタ側に置かれたブロックをタップしたときは、確認画面を出してその場ですぐに消去できるように回路を再直結！
+      clone.addEventListener('click', (ev) => { if (!ev.target.classList.contains('block-input') && !isPaused) { ev.stopPropagation(); if (confirm("このブロックを削除しますか？")) { clone.remove(); } } });
     });
   };
   const refresh = () => $('.block-palette .streech-block', true).forEach(b => setupPaletteBlock(b));
@@ -39,7 +42,7 @@ window.addEventListener('DOMContentLoaded', () => {
         const rb = targetBlock.cloneNode(true); rb.style.cssText = `position: relative; left: 0px; top: 0px; opacity: 1; z-index: 5; margin-top: 4px; display: flex; flex-direction: column;`;
         const inp = rb.querySelector('.block-input'); if (inp && d.val !== '') inp.value = d.val;
         const wrapSlot = ws.querySelector('.wrap-slot'); if (wrapSlot && !d.isHat) { wrapSlot.appendChild(rb); } else { ws.appendChild(rb); }
-        rb.addEventListener('click', (ev) => { if (!ev.target.classList.contains('block-input') && !isPaused) { ev.stopPropagation(); exec(rb); } });
+        rb.addEventListener('click', (ev) => { if (!ev.target.classList.contains('block-input') && !isPaused) { ev.stopPropagation(); if (confirm("このブロックを削除しますか？")) { rb.remove(); } } });
       });
     } else {
       const hat = document.createElement('div'); hat.className = 'streech-block block-events hat-block'; hat.style.cssText = 'position: relative; left: 0px; top: 0px; margin-top: 4px;'; hat.innerHTML = `<img src="./flag.svg" style="width:16px; height:16px; margin-right:4px;"><span>が押されたとき</span>`; ws.appendChild(hat);
