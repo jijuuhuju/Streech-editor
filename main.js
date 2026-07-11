@@ -72,14 +72,14 @@ window.addEventListener('DOMContentLoaded', () => {
       if (e.target.classList.contains('block-input') || isPaused) return; e.stopPropagation();
       const t = e.touches, r = block.getBoundingClientRect(); tx = t.clientX - r.left; ty = t.clientY - r.top;
       if (isPal) {
-        activeBlk = block.cloneNode(true); const inp = activeBlk.querySelector('.block-input'); if (inp) inp.style.pointerEvents = 'auto';
-        activeBlk.style.cssText = `position:fixed; z-index:1000; opacity:0.8; left:${t.clientX - tx}px; top:${t.clientY - ty}px;`; document.body.appendChild(activeBlk);
-      } else {
-        activeBlk = block; activeBlk.style.zIndex = '1000';
-        if (block.parentElement.classList.contains('streech-block') || block.parentNode !== $('#streech-workspace')) {
-          const ws = $('#streech-workspace'), wR = ws.getBoundingClientRect();
-          activeBlk.style.position = 'absolute'; activeBlk.style.left = `${r.left - wR.left}px`; activeBlk.style.top = `${r.top - wR.top}px`; ws.appendChild(activeBlk);
-        }
+        // 🛠️ 【機能新設】パレットのブロックをポンとタップするだけで自動生成してエディタに配置！
+        const newBlk = block.cloneNode(true); newBlk.style.cssText = `position:absolute; left:80px; top:120px; z-index:5;`;
+        $('#streech-workspace').appendChild(newBlk); attachTouch(newBlk, false); triggerRun(); return;
+      }
+      activeBlk = block; activeBlk.style.zIndex = '1000';
+      if (block.parentElement.classList.contains('streech-block') || block.parentNode !== $('#streech-workspace')) {
+        const ws = $('#streech-workspace'), wR = ws.getBoundingClientRect();
+        activeBlk.style.position = 'absolute'; activeBlk.style.left = `${r.left - wR.left}px`; activeBlk.style.top = `${r.top - wR.top}px`; ws.appendChild(activeBlk);
       }
     }, { passive: true });
 
@@ -87,22 +87,31 @@ window.addEventListener('DOMContentLoaded', () => {
 
     block.addEventListener('touchend', (e) => {
       if (!activeBlk) return; const ws = $('#streech-workspace'), wR = ws.getBoundingClientRect(), bR = activeBlk.getBoundingClientRect();
-      const palR = $('.block-palette').getBoundingClientRect(), t = e.changedTouches;
-      if (t.clientX >= palR.left && t.clientX <= palR.right && t.clientY >= palR.top && t.clientY <= palR.bottom) { activeBlk.remove(); activeBlk = null; return; }
       const dX = bR.left - wR.left, dY = bR.top - wR.top;
       if (bR.right > wR.left && bR.left < wR.right && bR.bottom > wR.top && bR.top < wR.top + ws.offsetHeight) {
-        activeBlk.style.cssText = `position:absolute; opacity:1; z-index:5; left:${dX}px; top:${dY}px;`; let snap = null;
+        activeBlk.style.cssText = `position:absolute; opacity:1; z-index:5; left:${dX}px; top:${dY}px;`; let snap = null, insideWrap = false;
         ws.querySelectorAll('.streech-block').forEach(ex => {
           if (ex === activeBlk || ex.contains(activeBlk)) return;
           const exR = ex.getBoundingClientRect(), exX = exR.left - wR.left, exY = exR.top - wR.top;
-          if (Math.abs(dX - exX) < 35 && Math.abs(dY - (exY + ex.offsetHeight)) < 35) snap = ex;
+          // 🛠️ 【機能新設】「ずっと」ブロックの前面に置くと、自動的にその中の溝（wrap-slot）の中に入るシステム
+          if (ex.classList.contains('wrap-block') && dX >= exX && dX <= exX + 165 && dY >= exY && dY <= exY + 40) { snap = ex.querySelector('.wrap-slot'); insideWrap = true; }
+          // 🛠️ 【機能新設】通常ブロック同士のマグネット結合（ハット型ブロックは絶対に上から結合できず、強制的に独立配置される）
+          else if (!activeBlk.classList.contains('hat-block') && Math.abs(dX - exX) < 35 && Math.abs(dY - (exY + ex.offsetHeight)) < 35) snap = ex;
         });
-        if (snap) { activeBlk.style.cssText = `position: relative; left: 0px; top: 2px; display: flex; z-index: 5; margin-top: 2px;`; snap.appendChild(activeBlk); } else { ws.appendChild(activeBlk); }
-        if (isPal) attachTouch(activeBlk, false);
+        if (snap) {
+          if (insideWrap) activeBlk.style.cssText = `position: relative; left: 0px; top: 0px; display: flex; z-index: 5; margin-left: 2px;`;
+          else activeBlk.style.cssText = `position: relative; left: 0px; top: 2px; display: flex; z-index: 5; margin-top: 2px;`;
+          snap.appendChild(activeBlk);
+        } else { ws.appendChild(activeBlk); }
       } else { activeBlk.remove(); }
       activeBlk = null;
     });
-    block.addEventListener('click', (e) => { if (!e.target.classList.contains('block-input') && !isPaused) triggerRun(); });
+
+    // 🛠️ 【機能新設】エディタ内のブロックをタップすると確認アラートを出し、削除しますか？と言われるシステム
+    block.addEventListener('click', (e) => {
+      if (e.target.classList.contains('block-input') || isPal || isPaused) return; e.stopPropagation();
+      if (confirm("ブロックを削除しますか？")) { block.remove(); } else { triggerRun(); }
+    });
   }
 
   const refreshPalette = () => $('.block-palette .streech-block', true).forEach(b => attachTouch(b, true));
