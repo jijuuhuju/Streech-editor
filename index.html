@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Streech Editor</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+  <!-- 🟢 ナビゲーションバー -->
+  <header>
+    <div class="header-left">
+      <div class="logo-container">
+        <img src="./streechlogo.svg" alt="Streech" class="logo-image">
+      </div>
+      <div class="menu-item" id="site-save-action">サイト内に保存</div>
+      <div class="menu-item">編集</div>
+      <div class="menu-item">チュートリアル</div>
+    </div>
+    <div class="header-right">
+      <button id="debug-btn" class="nav-debug-btn" title="デバッグ起動">
+        <img src="./Debug.svg" alt="Debug" class="nav-debug-img">
+        <span>デバッグ</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- メイン領域 -->
+  <div id="main-container">
+    <section id="blockly-section">
+      <div class="category-sidebar">
+        <div class="category-item active" data-category="motion"><div class="circle" style="background: #4C97FF;"></div>動き</div>
+        <div class="category-item" data-category="looks"><div class="circle" style="background: #9966FF;"></div>見た目</div>
+        <div class="category-item" data-category="sound"><div class="circle" style="background: #D65CD6;"></div>音</div>
+        <div class="category-item" data-category="events"><div class="circle" style="background: #FFD000;"></div>イベント</div>
+        <div class="category-item" data-category="control"><div class="circle" style="background: #FFAB19;"></div>制御</div>
+        <div class="category-item" data-category="sensing"><div class="circle" style="background: #4CBFE6;"></div>調べる</div>
+        <div class="category-item" data-category="operators"><div class="circle" style="background: #59C059;"></div>演算</div>
+        <div class="category-item" data-category="variables"><div class="circle" style="background: #FF8C1A;"></div>変数</div>
+      </div>
+
+      <!-- ブロックパレット -->
+      <div class="block-palette">
+        <div id="palette-title" class="palette-header">動き</div>
+        <div class="palette-scroll-container">
+          <div class="category-group motion-group" id="group-motion"></div>
+          <div class="category-group looks-group" id="group-looks" style="display: none;"></div>
+          <div class="category-group sound-group" id="group-sound" style="display: none;"></div>
+          <div class="category-group events-group" id="group-events" style="display: none;"></div>
+          <div class="category-group control-group" id="group-control" style="display: none;"></div>
+          <div class="category-group sensing-group" id="group-sensing" style="display: none;"></div>
+          <div class="category-group operators-group" id="group-operators" style="display: none;"></div>
+          <div class="category-group variables-group" id="group-variables" style="display: none;"></div>
+        </div>
+      </div>
+
+      <!-- 中央ワークスペース -->
+      <div class="block-workspace" id="streech-workspace"></div>
+    </section>
+    
+    <!-- 右側サイドバー -->
+    <section id="sidebar-section">
+      <div class="stage-header">
+        <div class="control-bar">
+          <button id="run-btn" class="control-btn"><img src="./flag.svg" class="control-img"></button>
+          <button id="pause-btn" class="control-btn"><img src="./Stop2.svg" class="control-img"></button>
+          <button id="stop-btn" class="control-btn"><img src="./Stop.svg" class="control-img"></button>
+        </div>
+      </div>
+      <div id="stage-area">
+        <div id="canvas-mock">
+          <div id="active-sprite-container" class="view-sprite1">
+            <img src="./public/Streech-nago-cat-a.svg" class="sprite-image">
+            <div class="sprite-name-badge">Sprite1</div>
+          </div>
+        </div>
+      </div>
+      <div id="asset-manager">
+        <div class="asset-info-bar">
+          <div class="info-item">スプライト <input type="text" class="info-input" id="sprite-name-input" value="Sprite1" style="width:70px; border-radius:6px; text-align:left; padding-left:6px;"></div>
+          <div class="info-item">x <input type="text" class="info-input" id="sprite-x-input" value="0"></div>
+          <div class="info-item">y <input type="text" class="info-input" id="sprite-y-input" value="0"></div>
+          <div class="info-item">大きさ <input type="text" class="info-input" id="sprite-size-input" value="100"></div>
+          <div class="info-item">向き <input type="text" class="info-input" id="sprite-dir-input" value="90"></div>
+        </div>
+        <div class="manager-panes">
+          <div class="sprites-pane-wrapper" style="display: flex; flex: 1; align-items: flex-end; position: relative;">
+            <div class="sprites-pane" id="sprites-list-container">
+              <div class="asset-card active" data-sprite-id="1">
+                <div class="asset-icon-placeholder" style="background: rgba(76, 151, 255, 0.1);"></div>
+                <span>Sprite1</span>
+              </div>
+            </div>
+            <button id="add-sprite-btn" class="add-asset-circle-btn" title="新規追加">＋</button>
+          </div>
+          <div class="stage-pane"><span>ステージ</span><div class="stage-card"><div class="stage-icon-placeholder"></div><span>背景1</span></div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
